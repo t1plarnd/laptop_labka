@@ -1,0 +1,18 @@
+meta {
+  name: Patch Laptop
+  type: http
+  seq: 5
+}
+
+patch {
+  url: {{baseUrl}}/laptops/1
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "price": 1299.00,
+    "ram": 32
+  }
+}

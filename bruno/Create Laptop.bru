@@ -1,0 +1,24 @@
+meta {
+  name: Create Laptop
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/laptops
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "brand": "Lenovo",
+    "model": "ThinkPad X1 Carbon",
+    "cpu": "Intel Core i7-1260P",
+    "ram": 16,
+    "storage": 512,
+    "price": 1499.99,
+    "year": 2023,
+    "serial_number": "SN-ABC123-0001"
+  }
+}
