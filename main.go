@@ -21,6 +21,7 @@ func main() {
 	mux.HandleFunc("GET /laptops/{id}", h.Get)
 	mux.HandleFunc("PUT /laptops/{id}", h.Update)
 	mux.HandleFunc("PATCH /laptops/{id}", h.Patch)
+	mux.HandleFunc("DELETE /laptops/{id}", h.Delete)
 
 	addr := ":8080"
 	log.Printf("server starting on %s", addr)

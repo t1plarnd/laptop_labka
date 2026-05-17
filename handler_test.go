@@ -97,6 +97,61 @@ func TestCreate_StoreError(t *testing.T) {
 	}
 }
 
+func TestDelete_OK(t *testing.T) {
+	called := false
+	m := &mockStore{
+		deleteFn: func(id int) error {
+			called = true
+			if id != 4 {
+				t.Fatalf("expected id 4, got %d", id)
+			}
+			return nil
+		},
+	}
+	h := NewHandler(m)
+	w := doRequestWithID(t, h.Delete, http.MethodDelete, "/laptops/4", "4", "")
+	if w.Code != http.StatusNoContent {
+		t.Fatalf("expected 204, got %d", w.Code)
+	}
+	if !called {
+		t.Fatalf("store.Delete was not called")
+	}
+}
+
+func TestDelete_NotFound(t *testing.T) {
+	m := &mockStore{
+		deleteFn: func(id int) error {
+			return ErrNotFound
+		},
+	}
+	h := NewHandler(m)
+	w := doRequestWithID(t, h.Delete, http.MethodDelete, "/laptops/9", "9", "")
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d", w.Code)
+	}
+}
+
+func TestDelete_BadID(t *testing.T) {
+	h := NewHandler(&mockStore{})
+	w := doRequestWithID(t, h.Delete, http.MethodDelete, "/laptops/abc", "abc", "")
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", w.Code)
+	}
+}
+
+func TestDelete_StoreError(t *testing.T) {
+	m := &mockStore{
+		deleteFn: func(id int) error {
+			return errors.New("db down")
+		},
+	}
+	h := NewHandler(m)
+	w := doRequestWithID(t, h.Delete, http.MethodDelete, "/laptops/1", "1", "")
+	if w.Code != http.StatusInternalServerError {
+		t.Fatalf("expected 500, got %d", w.Code)
+	}
+}
+
 func TestPatch_OK(t *testing.T) {
 	m := &mockStore{
 		patchFn: func(id int, p LaptopPatch) (Laptop, error) {
