@@ -23,6 +23,20 @@ func doRequest(t *testing.T, h http.HandlerFunc, method, target string, body str
 	return w
 }
 
+func doRequestWithID(t *testing.T, h http.HandlerFunc, method, target, id, body string) *httptest.ResponseRecorder {
+	t.Helper()
+	var r *http.Request
+	if body == "" {
+		r = httptest.NewRequest(method, target, nil)
+	} else {
+		r = httptest.NewRequest(method, target, strings.NewReader(body))
+	}
+	r.SetPathValue("id", id)
+	w := httptest.NewRecorder()
+	h(w, r)
+	return w
+}
+
 func TestCreate_OK(t *testing.T) {
 	m := &mockStore{
 		createFn: func(l Laptop) (Laptop, error) {
@@ -78,6 +92,64 @@ func TestCreate_StoreError(t *testing.T) {
 	h := NewHandler(m)
 	body, _ := json.Marshal(validLaptop())
 	w := doRequest(t, h.Create, http.MethodPost, "/laptops", string(body))
+	if w.Code != http.StatusInternalServerError {
+		t.Fatalf("expected 500, got %d", w.Code)
+	}
+}
+
+func TestGet_OK(t *testing.T) {
+	m := &mockStore{
+		getByIDFn: func(id int) (Laptop, error) {
+			return Laptop{ID: id, Brand: "Lenovo"}, nil
+		},
+	}
+	h := NewHandler(m)
+
+	w := doRequestWithID(t, h.Get, http.MethodGet, "/laptops/5", "5", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	var got Laptop
+	if err := json.Unmarshal(w.Body.Bytes(), &got); err != nil {
+		t.Fatalf("invalid json: %v", err)
+	}
+	if got.ID != 5 || got.Brand != "Lenovo" {
+		t.Fatalf("unexpected laptop: %+v", got)
+	}
+}
+
+func TestGet_NotFound(t *testing.T) {
+	m := &mockStore{
+		getByIDFn: func(id int) (Laptop, error) {
+			return Laptop{}, ErrNotFound
+		},
+	}
+	h := NewHandler(m)
+	w := doRequestWithID(t, h.Get, http.MethodGet, "/laptops/99", "99", "")
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d", w.Code)
+	}
+}
+
+func TestGet_BadID(t *testing.T) {
+	h := NewHandler(&mockStore{})
+	cases := []string{"abc", "0", "-1", ""}
+	for _, id := range cases {
+		w := doRequestWithID(t, h.Get, http.MethodGet, "/laptops/"+id, id, "")
+		if w.Code != http.StatusBadRequest {
+			t.Fatalf("id %q: expected 400, got %d", id, w.Code)
+		}
+	}
+}
+
+func TestGet_StoreError(t *testing.T) {
+	m := &mockStore{
+		getByIDFn: func(id int) (Laptop, error) {
+			return Laptop{}, errors.New("db down")
+		},
+	}
+	h := NewHandler(m)
+	w := doRequestWithID(t, h.Get, http.MethodGet, "/laptops/1", "1", "")
 	if w.Code != http.StatusInternalServerError {
 		t.Fatalf("expected 500, got %d", w.Code)
 	}

@@ -2,7 +2,9 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
+	"strconv"
 )
 
 type Handler struct {
@@ -21,6 +23,33 @@ func writeJSON(w http.ResponseWriter, status int, v interface{}) {
 
 func writeError(w http.ResponseWriter, status int, msg string) {
 	writeJSON(w, status, map[string]string{"error": msg})
+}
+
+func parseID(r *http.Request) (int, error) {
+	idStr := r.PathValue("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil || id <= 0 {
+		return 0, errors.New("invalid id")
+	}
+	return id, nil
+}
+
+func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
+	id, err := parseID(r)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	l, err := h.store.GetByID(id)
+	if errors.Is(err, ErrNotFound) {
+		writeError(w, http.StatusNotFound, "laptop not found")
+		return
+	}
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to fetch laptop")
+		return
+	}
+	writeJSON(w, http.StatusOK, l)
 }
 
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
