@@ -1,0 +1,24 @@
+meta {
+  name: Update Laptop
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/laptops/1
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "brand": "Dell",
+    "model": "XPS 15",
+    "cpu": "Intel Core i9-13900H",
+    "ram": 32,
+    "storage": 1024,
+    "price": 2499.00,
+    "year": 2024,
+    "serial_number": "SN-XPS150-2024"
+  }
+}

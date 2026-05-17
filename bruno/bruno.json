@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "laptop_labka",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}
