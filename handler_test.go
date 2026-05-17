@@ -83,6 +83,65 @@ func TestCreate_StoreError(t *testing.T) {
 	}
 }
 
+func TestList_OK(t *testing.T) {
+	m := &mockStore{
+		getAllFn: func() ([]Laptop, error) {
+			return []Laptop{
+				{ID: 1, Brand: "Lenovo"},
+				{ID: 2, Brand: "Dell"},
+			}, nil
+		},
+	}
+	h := NewHandler(m)
+
+	w := doRequest(t, h.List, http.MethodGet, "/laptops", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	var got []Laptop
+	if err := json.Unmarshal(w.Body.Bytes(), &got); err != nil {
+		t.Fatalf("invalid json: %v", err)
+	}
+	if len(got) != 2 {
+		t.Fatalf("expected 2 items, got %d", len(got))
+	}
+}
+
+func TestList_Empty(t *testing.T) {
+	m := &mockStore{
+		getAllFn: func() ([]Laptop, error) {
+			return []Laptop{}, nil
+		},
+	}
+	h := NewHandler(m)
+
+	w := doRequest(t, h.List, http.MethodGet, "/laptops", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	var got []Laptop
+	if err := json.Unmarshal(w.Body.Bytes(), &got); err != nil {
+		t.Fatalf("invalid json: %v", err)
+	}
+	if len(got) != 0 {
+		t.Fatalf("expected empty, got %d", len(got))
+	}
+}
+
+func TestList_StoreError(t *testing.T) {
+	m := &mockStore{
+		getAllFn: func() ([]Laptop, error) {
+			return nil, errors.New("db down")
+		},
+	}
+	h := NewHandler(m)
+
+	w := doRequest(t, h.List, http.MethodGet, "/laptops", "")
+	if w.Code != http.StatusInternalServerError {
+		t.Fatalf("expected 500, got %d", w.Code)
+	}
+}
+
 func TestCreate_IgnoresClientID(t *testing.T) {
 	var seen Laptop
 	m := &mockStore{

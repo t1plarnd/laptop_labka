@@ -16,6 +16,7 @@ func main() {
 		w.Write([]byte("ok"))
 	})
 
+	mux.HandleFunc("GET /laptops", h.List)
 	mux.HandleFunc("POST /laptops", h.Create)
 
 	addr := ":8080"
