@@ -58,3 +58,57 @@ func (l *Laptop) Validate() error {
 	}
 	return nil
 }
+
+func (p *LaptopPatch) Validate() error {
+	if p.Brand != nil {
+		if *p.Brand == "" {
+			return errors.New("brand is required")
+		}
+		if len(*p.Brand) > 50 {
+			return errors.New("brand is too long")
+		}
+	}
+	if p.Model != nil {
+		if *p.Model == "" {
+			return errors.New("model is required")
+		}
+		if len(*p.Model) > 50 {
+			return errors.New("model is too long")
+		}
+	}
+	if p.CPU != nil {
+		if *p.CPU == "" {
+			return errors.New("cpu is required")
+		}
+	}
+	if p.RAM != nil {
+		if *p.RAM <= 0 {
+			return errors.New("ram must be positive")
+		}
+		if *p.RAM > 256 {
+			return errors.New("ram is too large")
+		}
+	}
+	if p.Storage != nil {
+		if *p.Storage <= 0 {
+			return errors.New("storage must be positive")
+		}
+	}
+	if p.Price != nil {
+		if *p.Price <= 0 {
+			return errors.New("price must be positive")
+		}
+	}
+	if p.Year != nil {
+		maxYear := time.Now().Year() + 1
+		if *p.Year < 2000 || *p.Year > maxYear {
+			return fmt.Errorf("year must be between 2000 and %d", maxYear)
+		}
+	}
+	if p.SerialNumber != nil {
+		if !serialRegex.MatchString(*p.SerialNumber) {
+			return errors.New("serial_number must match format SN-XXXXXX-XXXX")
+		}
+	}
+	return nil
+}
