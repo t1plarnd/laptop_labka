@@ -23,6 +23,15 @@ func writeError(w http.ResponseWriter, status int, msg string) {
 	writeJSON(w, status, map[string]string{"error": msg})
 }
 
+func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
+	laptops, err := h.store.GetAll()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to fetch laptops")
+		return
+	}
+	writeJSON(w, http.StatusOK, laptops)
+}
+
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	var l Laptop
 	if err := json.NewDecoder(r.Body).Decode(&l); err != nil {
