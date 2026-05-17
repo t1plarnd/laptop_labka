@@ -25,6 +25,47 @@ func TestValidate_OK(t *testing.T) {
 	}
 }
 
+func TestPatchValidate_EmptyOK(t *testing.T) {
+	var p LaptopPatch
+	if err := p.Validate(); err != nil {
+		t.Fatalf("expected nil, got %v", err)
+	}
+}
+
+func TestPatchValidate_Errors(t *testing.T) {
+	emptyStr := ""
+	zero := 0
+	neg := -5
+	tooBig := 1000
+	badYear := 1990
+	badSerial := "xx"
+
+	cases := []struct {
+		name string
+		p    LaptopPatch
+		want string
+	}{
+		{"empty brand", LaptopPatch{Brand: &emptyStr}, "brand is required"},
+		{"empty cpu", LaptopPatch{CPU: &emptyStr}, "cpu is required"},
+		{"zero ram", LaptopPatch{RAM: &zero}, "ram must be positive"},
+		{"neg ram", LaptopPatch{RAM: &neg}, "ram must be positive"},
+		{"huge ram", LaptopPatch{RAM: &tooBig}, "ram is too large"},
+		{"bad year", LaptopPatch{Year: &badYear}, "year must be between"},
+		{"bad serial", LaptopPatch{SerialNumber: &badSerial}, "serial_number must match"},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			err := c.p.Validate()
+			if err == nil {
+				t.Fatalf("expected error containing %q, got nil", c.want)
+			}
+			if !strings.Contains(err.Error(), c.want) {
+				t.Fatalf("expected error containing %q, got %q", c.want, err.Error())
+			}
+		})
+	}
+}
+
 func TestValidate_Errors(t *testing.T) {
 	cases := []struct {
 		name   string

@@ -61,6 +61,33 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, laptops)
 }
 
+func (h *Handler) Patch(w http.ResponseWriter, r *http.Request) {
+	id, err := parseID(r)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	var p LaptopPatch
+	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid json")
+		return
+	}
+	if err := p.Validate(); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	updated, err := h.store.Patch(id, p)
+	if errors.Is(err, ErrNotFound) {
+		writeError(w, http.StatusNotFound, "laptop not found")
+		return
+	}
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to update laptop")
+		return
+	}
+	writeJSON(w, http.StatusOK, updated)
+}
+
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	id, err := parseID(r)
 	if err != nil {

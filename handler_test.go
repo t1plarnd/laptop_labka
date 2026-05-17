@@ -97,6 +97,76 @@ func TestCreate_StoreError(t *testing.T) {
 	}
 }
 
+func TestPatch_OK(t *testing.T) {
+	m := &mockStore{
+		patchFn: func(id int, p LaptopPatch) (Laptop, error) {
+			l := Laptop{ID: id, Brand: "Lenovo", RAM: 16}
+			if p.RAM != nil {
+				l.RAM = *p.RAM
+			}
+			return l, nil
+		},
+	}
+	h := NewHandler(m)
+
+	w := doRequestWithID(t, h.Patch, http.MethodPatch, "/laptops/1", "1", `{"ram": 32}`)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d, body: %s", w.Code, w.Body.String())
+	}
+	var got Laptop
+	if err := json.Unmarshal(w.Body.Bytes(), &got); err != nil {
+		t.Fatalf("invalid json: %v", err)
+	}
+	if got.RAM != 32 {
+		t.Fatalf("expected ram 32, got %d", got.RAM)
+	}
+}
+
+func TestPatch_NotFound(t *testing.T) {
+	m := &mockStore{
+		patchFn: func(id int, p LaptopPatch) (Laptop, error) {
+			return Laptop{}, ErrNotFound
+		},
+	}
+	h := NewHandler(m)
+	w := doRequestWithID(t, h.Patch, http.MethodPatch, "/laptops/9", "9", `{"ram": 32}`)
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d", w.Code)
+	}
+}
+
+func TestPatch_InvalidJSON(t *testing.T) {
+	h := NewHandler(&mockStore{})
+	w := doRequestWithID(t, h.Patch, http.MethodPatch, "/laptops/1", "1", "{not json")
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", w.Code)
+	}
+}
+
+func TestPatch_ValidationError(t *testing.T) {
+	h := NewHandler(&mockStore{})
+	w := doRequestWithID(t, h.Patch, http.MethodPatch, "/laptops/1", "1", `{"ram": -1}`)
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", w.Code)
+	}
+	if !bytes.Contains(w.Body.Bytes(), []byte("ram must be positive")) {
+		t.Fatalf("expected validation error, got %s", w.Body.String())
+	}
+}
+
+func TestPatch_EmptyBodyAllowed(t *testing.T) {
+	m := &mockStore{
+		patchFn: func(id int, p LaptopPatch) (Laptop, error) {
+			return Laptop{ID: id, Brand: "Lenovo"}, nil
+		},
+	}
+	h := NewHandler(m)
+	w := doRequestWithID(t, h.Patch, http.MethodPatch, "/laptops/1", "1", `{}`)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+}
+
 func TestUpdate_OK(t *testing.T) {
 	m := &mockStore{
 		updateFn: func(id int, l Laptop) (Laptop, error) {
