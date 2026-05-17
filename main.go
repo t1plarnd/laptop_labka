@@ -6,12 +6,17 @@ import (
 )
 
 func main() {
+	store := NewMemoryStore()
+	h := NewHandler(store)
+
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("ok"))
 	})
+
+	mux.HandleFunc("POST /laptops", h.Create)
 
 	addr := ":8080"
 	log.Printf("server starting on %s", addr)
