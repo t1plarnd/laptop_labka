@@ -19,6 +19,7 @@ func main() {
 	mux.HandleFunc("GET /laptops", h.List)
 	mux.HandleFunc("POST /laptops", h.Create)
 	mux.HandleFunc("GET /laptops/{id}", h.Get)
+	mux.HandleFunc("PUT /laptops/{id}", h.Update)
 
 	addr := ":8080"
 	log.Printf("server starting on %s", addr)

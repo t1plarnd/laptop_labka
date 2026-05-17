@@ -97,6 +97,78 @@ func TestCreate_StoreError(t *testing.T) {
 	}
 }
 
+func TestUpdate_OK(t *testing.T) {
+	m := &mockStore{
+		updateFn: func(id int, l Laptop) (Laptop, error) {
+			l.ID = id
+			return l, nil
+		},
+	}
+	h := NewHandler(m)
+
+	l := validLaptop()
+	l.Brand = "Asus"
+	body, _ := json.Marshal(l)
+	w := doRequestWithID(t, h.Update, http.MethodPut, "/laptops/3", "3", string(body))
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d, body: %s", w.Code, w.Body.String())
+	}
+	var got Laptop
+	if err := json.Unmarshal(w.Body.Bytes(), &got); err != nil {
+		t.Fatalf("invalid json: %v", err)
+	}
+	if got.ID != 3 || got.Brand != "Asus" {
+		t.Fatalf("unexpected response: %+v", got)
+	}
+}
+
+func TestUpdate_NotFound(t *testing.T) {
+	m := &mockStore{
+		updateFn: func(id int, l Laptop) (Laptop, error) {
+			return Laptop{}, ErrNotFound
+		},
+	}
+	h := NewHandler(m)
+
+	body, _ := json.Marshal(validLaptop())
+	w := doRequestWithID(t, h.Update, http.MethodPut, "/laptops/9", "9", string(body))
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d", w.Code)
+	}
+}
+
+func TestUpdate_InvalidJSON(t *testing.T) {
+	h := NewHandler(&mockStore{})
+	w := doRequestWithID(t, h.Update, http.MethodPut, "/laptops/1", "1", "{not json")
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", w.Code)
+	}
+}
+
+func TestUpdate_ValidationError(t *testing.T) {
+	h := NewHandler(&mockStore{})
+	bad := validLaptop()
+	bad.RAM = 0
+	body, _ := json.Marshal(bad)
+	w := doRequestWithID(t, h.Update, http.MethodPut, "/laptops/1", "1", string(body))
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", w.Code)
+	}
+	if !bytes.Contains(w.Body.Bytes(), []byte("ram must be positive")) {
+		t.Fatalf("expected validation error in body, got %s", w.Body.String())
+	}
+}
+
+func TestUpdate_BadID(t *testing.T) {
+	h := NewHandler(&mockStore{})
+	body, _ := json.Marshal(validLaptop())
+	w := doRequestWithID(t, h.Update, http.MethodPut, "/laptops/abc", "abc", string(body))
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", w.Code)
+	}
+}
+
 func TestGet_OK(t *testing.T) {
 	m := &mockStore{
 		getByIDFn: func(id int) (Laptop, error) {
