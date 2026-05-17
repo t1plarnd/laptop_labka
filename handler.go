@@ -116,6 +116,24 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, updated)
 }
 
+func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
+	id, err := parseID(r)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	err = h.store.Delete(id)
+	if errors.Is(err, ErrNotFound) {
+		writeError(w, http.StatusNotFound, "laptop not found")
+		return
+	}
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to delete laptop")
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	var l Laptop
 	if err := json.NewDecoder(r.Body).Decode(&l); err != nil {
