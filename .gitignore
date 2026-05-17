@@ -1,0 +1,6 @@
+laptop_labka
+*.exe
+*.out
+.DS_Store
+.idea/
+.vscode/
