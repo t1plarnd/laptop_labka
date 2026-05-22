@@ -1,0 +1,9 @@
+laptop_labka
+*.exe
+*.out
+.git
+.gitignore
+.idea
+.vscode
+bruno
+README.md
