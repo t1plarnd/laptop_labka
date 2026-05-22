@@ -1,12 +1,24 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
+	"os"
 )
 
 func main() {
-	store := NewMemoryStore()
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		log.Fatal("DATABASE_URL is required")
+	}
+
+	store, err := NewPostgresStore(context.Background(), dsn)
+	if err != nil {
+		log.Fatalf("postgres: %v", err)
+	}
+	defer store.Close()
+
 	h := NewHandler(store)
 
 	mux := http.NewServeMux()

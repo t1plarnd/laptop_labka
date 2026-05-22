@@ -1,28 +1,45 @@
 # laptop_labka
 
-Lab work: REST API server in Go for managing laptops (CRUD).
+Lab work: REST API server in Go for managing laptops (CRUD). Backed by PostgreSQL.
 
 ## Requirements
 
-- Go 1.22+
+- Docker + Docker Compose
+- (optional) Go 1.25+ for local builds and tests
 
 ## Run
 
 ```
-go run .
+docker compose up --build
 ```
 
-Server listens on `:8080`. Healthcheck:
+App on `:8080`, Postgres on `:5432`. Schema auto-created from `init.sql`.
+
+Healthcheck:
 
 ```
 curl http://localhost:8080/health
 ```
+
+Stop and wipe data:
+
+```
+docker compose down -v
+```
+
+## Environment
+
+| Var          | Example                                                  |
+|--------------|----------------------------------------------------------|
+| DATABASE_URL | `postgres://laptop:laptop@db:5432/laptops?sslmode=disable` |
 
 ## Tests
 
 ```
 go test ./...
 ```
+
+Tests use the in-memory store, no Postgres required.
 
 ## API
 
