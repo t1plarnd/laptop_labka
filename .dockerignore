@@ -7,3 +7,5 @@ laptop_labka
 .vscode
 bruno
 README.md
+.env
+.env.example
