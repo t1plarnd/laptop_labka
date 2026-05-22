@@ -4,3 +4,4 @@ laptop_labka
 .DS_Store
 .idea/
 .vscode/
+.env
