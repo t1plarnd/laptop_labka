@@ -10,6 +10,7 @@ Lab work: REST API server in Go for managing laptops (CRUD). Backed by PostgreSQ
 ## Run
 
 ```
+cp .env.example .env
 docker compose up --build
 ```
 
@@ -29,9 +30,17 @@ docker compose down -v
 
 ## Environment
 
-| Var          | Example                                                  |
-|--------------|----------------------------------------------------------|
-| DATABASE_URL | `postgres://laptop:laptop@db:5432/laptops?sslmode=disable` |
+Compose reads values from `.env` (copy from `.env.example`).
+
+| Var               | Example   | Notes                            |
+|-------------------|-----------|----------------------------------|
+| POSTGRES_USER     | laptop    | DB user                          |
+| POSTGRES_PASSWORD | laptop    | DB password                      |
+| POSTGRES_DB       | laptops   | DB name                          |
+| POSTGRES_PORT     | 5432      | Host port mapped to Postgres     |
+| APP_PORT          | 8080      | Host port mapped to API          |
+
+App container itself reads `DATABASE_URL`, which Compose builds from the values above.
 
 ## Tests
 
