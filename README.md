@@ -39,7 +39,7 @@ docker compose down -v
 go test ./...
 ```
 
-Tests use the in-memory store, no Postgres required.
+Handler tests use a mock store, no Postgres required.
 
 ## API
 
